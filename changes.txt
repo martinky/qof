@@ -1,0 +1,6 @@
+﻿Version 1.3 (Ian Obermiller)
+ - Refactored code
+ - Improved speed of populating and rendering the list
+ - Added support for multiple search terms (space separated, ex. "fi cpp" will find "SomeFile.cpp" but not "SomeFile.h")
+ - Don't show duplicate files (files that exist in multiple projects)
+ - Start searching after the second character
