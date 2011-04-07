@@ -35,6 +35,7 @@ namespace QuickOpenFile
 
             uxSearch_TextChanged(this, EventArgs.Empty); // this causes to repeat the last search, fills the list view
         }
+
         private void uxSearch_TextChanged(object sender, System.EventArgs e)
         {
             // incrementally search the index
@@ -111,19 +112,21 @@ namespace QuickOpenFile
             }
         }
 
-        private void uxOpen_Click(object sender, EventArgs e)
+        private IEnumerable<SolutionFile> GetSelectedSolutionFiles()
         {
-            // open the selected item in default editor using command window and close this toolbox
-            openToolStripMenuItem_Click(this, EventArgs.Empty);
-        }
+            IEnumerable<ListViewItem> files;
+            if (uxFiles.CheckedItems.Count > 0)
+            {
+                files = uxFiles.CheckedItems.Cast<ListViewItem>();
+            }
+            else
+            {
+                files = uxFiles.SelectedItems.Cast<ListViewItem>();
+            }
 
-        private SolutionFile GetSelectedSolutionResource()
-        {
-            if (uxFiles.SelectedItems.Count != 1)
-                return null;
-            if (uxFiles.SelectedItems[0].Tag == null)
-                return null;
-            return (SolutionFile)uxFiles.SelectedItems[0].Tag;
+            return files.
+                Where(i => i.Tag != null).
+                Select(i => i.Tag as SolutionFile);
         }
 
         private bool OpenSolutionResource(SolutionFile sr, string editor)
@@ -134,11 +137,17 @@ namespace QuickOpenFile
             if (cmw == null) return false;
 
             if (editor == null)
+            {
                 cmw.ExecuteCommand("of \"" + sr.FilePath + "\"");
+            }
             else if (editor.Length == 0)
+            {
                 cmw.ExecuteCommand("of \"" + sr.FilePath + "\" /editor");
+            }
             else
+            {
                 cmw.ExecuteCommand("of \"" + sr.FilePath + "\" /e:\"" + editor + "\"");
+            }
 
             return true;
         }
@@ -160,71 +169,75 @@ namespace QuickOpenFile
 
         private void uxSearch_KeyDown(object sender, KeyEventArgs e)
         {
-            int selection_delta = 0;
-            if (e.KeyCode == Keys.Down)
+            switch (e.KeyCode)
             {
-                selection_delta = 1;
-                e.SuppressKeyPress = true;
-            }
-            else if (e.KeyCode == Keys.Up)
-            {
-                selection_delta = -1;
-                e.SuppressKeyPress = true;
-            }
-            else if (e.KeyCode == Keys.PageDown)
-            {
-                if (uxFiles.Items.Count > 0)
-                    selection_delta = uxFiles.ClientSize.Height / uxFiles.Items[0].Bounds.Height - 1;
-                if (selection_delta <= 0) selection_delta = 1;
-                e.SuppressKeyPress = true;
-            }
-            else if (e.KeyCode == Keys.PageUp)
-            {
-                if (uxFiles.Items.Count > 0)
-                    selection_delta = uxFiles.ClientSize.Height / uxFiles.Items[0].Bounds.Height - 1;
-                if (selection_delta <= 0) selection_delta = -1; else selection_delta = -selection_delta;
-                e.SuppressKeyPress = true;
-            }
-            else if (e.KeyCode == Keys.Return)
-            {
-                if (e.Shift)
-                    openWithToolStripMenuItem_Click(this, EventArgs.Empty);
-                else
-                    openToolStripMenuItem_Click(this, EventArgs.Empty);
-                e.SuppressKeyPress = true;
-            }
-            else if (e.KeyCode == Keys.Escape)
-            {
-                e.SuppressKeyPress = true;
-                HideToolWindow();
-            }
-
-            if (selection_delta != 0 && uxFiles.Items.Count > 0)
-            {
-                int selection_index = 0;
-                if (uxFiles.SelectedItems.Count > 0) selection_index = uxFiles.SelectedItems[0].Index;
-                selection_index = selection_index + selection_delta;
-                if (selection_index < 0) selection_index = 0;
-                if (selection_index >= uxFiles.Items.Count) selection_index = uxFiles.Items.Count - 1;
-                uxFiles.Items[selection_index].Selected = true;
-                uxFiles.EnsureVisible(selection_index);
+                case Keys.Down:
+                    uxFiles.Focus();
+                    e.SuppressKeyPress = true;
+                    break;
+                case Keys.PageDown:
+                    uxFiles.Focus();
+                    SendKeys.Send("{PGDN}");
+                    e.SuppressKeyPress = true;
+                    break;
+                case Keys.Return:
+                    OpenSelectedFiles(e.Shift ? string.Empty : null);
+                    e.SuppressKeyPress = true;
+                    break;
+                case Keys.Escape:
+                    HideToolWindow();
+                    break;
             }
         }
 
-        private void uxFiles_DoubleClick(object sender, EventArgs e)
+        private void uxFiles_KeyPress(object sender, KeyPressEventArgs e)
         {
-            uxOpen_Click(this, EventArgs.Empty);
+            if (e.KeyChar != ' ')
+            {
+                uxSearch.Focus();
+                SendKeys.Send(e.KeyChar.ToString());
+                e.Handled = true;
+            }
+            else
+            {
+                e.Handled = false;
+            }
         }
 
         private void uxFiles_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Return)
+            switch (e.KeyCode)
             {
-                if (e.Shift)
-                    openWithToolStripMenuItem_Click(this, EventArgs.Empty);
-                else
-                    openToolStripMenuItem_Click(this, EventArgs.Empty);
+                case Keys.PageUp:
+                case Keys.Up:
+                    if (uxFiles.SelectedIndices.Contains(0))
+                    {
+                        uxSearch.Focus();
+                        e.SuppressKeyPress = true;
+                    }
+                    break;
+                case Keys.Return:
+                    OpenSelectedFiles(e.Shift ? string.Empty : null);
+                    e.SuppressKeyPress = true;
+                    break;
+                case Keys.Escape:
+                    HideToolWindow();
+                    break;
+                default:
+                    e.SuppressKeyPress = false;
+                    break;
             }
+        }
+
+
+        private void uxOpen_Click(object sender, EventArgs e)
+        {
+            OpenSelectedFiles();
+        }
+
+        private void uxFiles_DoubleClick(object sender, EventArgs e)
+        {
+            OpenSelectedFiles();
         }
 
         private void uxFiles_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
@@ -258,18 +271,32 @@ namespace QuickOpenFile
             }
         }
 
+        private void OpenSelectedFiles(string editor = null)
+        {
+            bool success = true;
+            // open the selected item in default editor using command window and close this toolbox
+            foreach (var file in GetSelectedSolutionFiles())
+            {
+                if (!OpenSolutionResource(file, editor))
+                {
+                    success = false;
+                }
+            }
+
+            if (success)
+            {
+                HideToolWindow();
+            }
+        }
+
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            // open the selected item in default editor using command window and close this toolbox
-            if (OpenSolutionResource(GetSelectedSolutionResource(), null))
-                HideToolWindow();
+            OpenSelectedFiles();
         }
 
         private void openWithToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            // open the selected item in user-selected editor using command window and close this toolbox
-            if (OpenSolutionResource(GetSelectedSolutionResource(), ""))
-                HideToolWindow();
+            OpenSelectedFiles(string.Empty);
         }
 
         private void uxOpenWith_MouseDown(object sender, MouseEventArgs e)
