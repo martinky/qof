@@ -1,12 +1,10 @@
 ﻿using System;
+using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
-using System.ComponentModel.Design;
-using Microsoft.Win32;
-using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 
 namespace QuickOpenFile
 {
@@ -25,7 +23,7 @@ namespace QuickOpenFile
     [PackageRegistration(UseManagedResourcesOnly = true)]
     // This attribute is used to register the informations needed to show the this package
     // in the Help/About dialog of Visual Studio.
-    [InstalledProductRegistration("#110", "#112", "1.2", IconResourceID = 400)]
+    [InstalledProductRegistration("#110", "#112", "1.3", IconResourceID = 400)]
     // This attribute is needed to let the shell know that this package exposes some menus.
     [ProvideMenuResource("Menus.ctmenu", 1)]
     // This attribute registers a tool window exposed by this package.
@@ -62,9 +60,9 @@ namespace QuickOpenFile
             }
             IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
             Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
-			QuickOpenFileToolWindow mytv = (QuickOpenFileToolWindow)window;
-			windowFrame.Show();
-			mytv.ControlInitShowInvoke();
+            QuickOpenFileToolWindow mytv = (QuickOpenFileToolWindow)window;
+            windowFrame.Show();
+            mytv.ControlInitShowInvoke();
         }
 
 
@@ -78,12 +76,12 @@ namespace QuickOpenFile
         /// </summary>
         protected override void Initialize()
         {
-            Trace.WriteLine (string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
+            Trace.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
             base.Initialize();
 
             // Add our command handlers for menu (commands must exist in the .vsct file)
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
-            if ( null != mcs )
+            if (null != mcs)
             {
                 // Create the command for the menu item.
                 //CommandID menuCommandID = new CommandID(GuidList.guidQuickOpenFileVS2010CmdSet, (int)PkgCmdIDList.cmdidAOOpenResource);
@@ -92,9 +90,9 @@ namespace QuickOpenFile
                 // Create the command for the tool window
                 CommandID toolwndCommandID = new CommandID(GuidList.guidQuickOpenFileVS2010CmdSet, (int)PkgCmdIDList.cmdidAOToolWindow);
                 MenuCommand menuToolWin = new MenuCommand(ShowToolWindow, toolwndCommandID);
-                mcs.AddCommand( menuToolWin );
+                mcs.AddCommand(menuToolWin);
             }
-			Instance = this;
+            Instance = this;
         }
         #endregion
 
@@ -103,27 +101,27 @@ namespace QuickOpenFile
         /// See the Initialize method to see how the menu item is associated to this function using
         /// the OleMenuCommandService service and the MenuCommand class.
         /// </summary>
-		//private void MenuItemCallback(object sender, EventArgs e)
-		//{
-		//    // Show a Message Box to prove we were here
-		//    IVsUIShell uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
-		//    Guid clsid = Guid.Empty;
-		//    int result;
-		//    Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(uiShell.ShowMessageBox(
-		//               0,
-		//               ref clsid,
-		//               "Quick Open File for Visual Studio 2010",
-		//               string.Format(CultureInfo.CurrentCulture, "Inside {0}.MenuItemCallback()", this.ToString()),
-		//               string.Empty,
-		//               0,
-		//               OLEMSGBUTTON.OLEMSGBUTTON_OK,
-		//               OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST,
-		//               OLEMSGICON.OLEMSGICON_INFO,
-		//               0,        // false
-		//               out result));
-		//}
+        //private void MenuItemCallback(object sender, EventArgs e)
+        //{
+        //    // Show a Message Box to prove we were here
+        //    IVsUIShell uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
+        //    Guid clsid = Guid.Empty;
+        //    int result;
+        //    Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(uiShell.ShowMessageBox(
+        //               0,
+        //               ref clsid,
+        //               "Quick Open File for Visual Studio 2010",
+        //               string.Format(CultureInfo.CurrentCulture, "Inside {0}.MenuItemCallback()", this.ToString()),
+        //               string.Empty,
+        //               0,
+        //               OLEMSGBUTTON.OLEMSGBUTTON_OK,
+        //               OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST,
+        //               OLEMSGICON.OLEMSGICON_INFO,
+        //               0,        // false
+        //               out result));
+        //}
 
-		public static QuickOpenFilePackage Instance = null;
+        public static QuickOpenFilePackage Instance = null;
 
     }
 }
