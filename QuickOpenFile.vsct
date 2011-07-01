@@ -64,21 +64,11 @@
               <CommandFlag>DynamicVisibility</CommandFlag>
           If you do not want an image next to your command, remove the Icon node or set it to <Icon guid="guidOfficeIcon" id="msotcidNoIcon" /> -->
 
-      <!--<Button guid="guidQuickOpenFileVS2010CmdSet" id="cmdidAOOpenResource" priority="0x0100" type="Button">
-        <Parent guid="guidQuickOpenFileVS2010CmdSet" id="MyMenuGroup" />
-        <Icon guid="guidImages" id="bmpPic1" />
-        <Strings>
-          <CommandName>cmdidAOOpenResource</CommandName>
-          <ButtonText>Quick Open File</ButtonText>
-        </Strings>
-      </Button>-->
-
-
-      <Button guid="guidQuickOpenFileVS2010CmdSet" id="cmdidAOToolWindow" priority="0x1000" type="Button">
+      <Button guid="guidQuickOpenFileVS2010CmdSet" id="cmdidQuickOpenFile" priority="0x1000" type="Button">
         <Parent guid="guidSHLMainMenu" id="IDG_VS_EDIT_FIND"/>
         <Icon guid="guidImages" id="bmpPicSearch" />
         <Strings>
-          <CommandName>cmdidAOToolWindow</CommandName>
+          <CommandName>cmdidQuickOpenFile</CommandName>
           <ButtonText>Quick Open File</ButtonText>
         </Strings>
       </Button>
@@ -100,11 +90,11 @@
   </Commands>
 
 
-	<KeyBindings>
-		<KeyBinding guid="guidQuickOpenFileVS2010CmdSet" id="cmdidAOToolWindow" editor="guidVSStd97" key1="K" mod1="Control" key2="O" mod2="Control" />
-		<KeyBinding guid="guidQuickOpenFileVS2010CmdSet" id="cmdidAOToolWindow" editor="guidVSStd2K" key1="K" mod1="Control" key2="O" mod2="Control" />
-		<KeyBinding guid="guidQuickOpenFileVS2010CmdSet" id="cmdidAOToolWindow" editor="guidVSStd10" key1="K" mod1="Control" key2="O" mod2="Control" />
-	</KeyBindings>
+  <KeyBindings>
+    <KeyBinding guid="guidQuickOpenFileVS2010CmdSet" id="cmdidQuickOpenFile" editor="guidVSStd97" key1="K" mod1="Control" key2="O" mod2="Control" />
+    <KeyBinding guid="guidQuickOpenFileVS2010CmdSet" id="cmdidQuickOpenFile" editor="guidVSStd2K" key1="K" mod1="Control" key2="O" mod2="Control" />
+    <KeyBinding guid="guidQuickOpenFileVS2010CmdSet" id="cmdidQuickOpenFile" editor="guidVSStd10" key1="K" mod1="Control" key2="O" mod2="Control" />
+  </KeyBindings>
 
 
 
@@ -116,8 +106,7 @@
     <GuidSymbol name="guidQuickOpenFileVS2010CmdSet" value="{66d22e6e-c8ab-454d-ad5f-c0985e6fd7fd}">
 
       <IDSymbol name="MyMenuGroup" value="0x1020" />
-      <!--<IDSymbol name="cmdidAOOpenResource" value="0x0100" />-->
-      <IDSymbol name="cmdidAOToolWindow" value="0x0101" />
+      <IDSymbol name="cmdidQuickOpenFile" value="0x0101" />
     </GuidSymbol>
     
     

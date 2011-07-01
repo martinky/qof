@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 
 namespace QuickOpenFile
 {
@@ -21,7 +22,9 @@ namespace QuickOpenFile
         // using the Content property. Note that, even if this class implements IDispose, we are
         // not calling Dispose on this object. This is because ToolWindowPane calls Dispose on 
         // the object returned by the Content property.
-        private QuickOpenFile.QuickOpenFileControl control;
+        private QuickOpenFileControl control;
+        private const int WM_KEYDOWN = 0x0100;
+        private const int VK_ESCAPE = 0x1B;
 
         /// <summary>
         /// Standard constructor for the tool window.
@@ -38,16 +41,47 @@ namespace QuickOpenFile
             // the strip being 16x16.
             this.BitmapResourceID = 301;
             this.BitmapIndex = 2;
-
-            control = new QuickOpenFile.QuickOpenFileControl();
         }
 
-        // This just calls the control.InitOnShow() member each time the command is invoked.
-        public void ControlInitShowInvoke()
+        // Initializes the search UI and indexes the opened solution for fast search.
+        public void InitControl()
         {
-            control.BeginInvoke((Action)(() => control.InitOnShow()));
+            //control.BeginInvoke((Action)(() => control.InitOnShow()));
+            // this seems to be called from the gui thread, no need to BeginInvoke
+            control.InitControl();
         }
 
+        // Hides the tool window, except when docked.
+        public void HideToolWindow()
+        {
+            if (null != Frame)
+            {
+                IVsWindowFrame parentWindowFrame = (IVsWindowFrame)Frame;
+                object frameMode;
+                parentWindowFrame.GetProperty((int)__VSFPROPID.VSFPROPID_FrameMode, out frameMode);
+                VSFRAMEMODE frameModeEnum = (VSFRAMEMODE)frameMode;
+                if (frameModeEnum == VSFRAMEMODE.VSFM_Float || frameModeEnum == VSFRAMEMODE.VSFM_FloatOnly)
+                    parentWindowFrame.Hide();
+            }
+        }
+
+        protected override bool PreProcessMessage(ref Message m)
+        {
+            if (m.Msg == WM_KEYDOWN && m.WParam.ToInt32() == VK_ESCAPE)
+            {
+                HideToolWindow();
+                return true;
+            }
+            else
+                return base.PreProcessMessage(ref m);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (control != null)
+                control.CleanUp();
+            base.Dispose(disposing);
+        }
 
         /// <summary>
         /// This property returns the control that should be hosted in the Tool Window.
@@ -58,7 +92,13 @@ namespace QuickOpenFile
         {
             get
             {
-                return this.control;
+                if (control == null)
+                {
+                    control = new QuickOpenFileControl();
+                    control.parentWindowPane = this;
+                    control.applicationRegistryKey = ((QuickOpenFilePackage)this.Package).ApplicationRegistryRoot.Name;
+                }
+                return control;
             }
         }
 

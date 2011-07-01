@@ -117,7 +117,33 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <metadata name="uxToolTip.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>168, 17</value>
+  </metadata>
   <metadata name="uxOpenWithMenu.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
+  </metadata>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="uxOptions.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
+        YQUAAAAZdEVYdFNvZnR3YXJlAEFkb2JlIEltYWdlUmVhZHlxyWU8AAAC9klEQVQ4T22RXUhTYRjHnwP7
+        0plL52ybOFEnGmJIOp04tzmXZDJxX+pN5chmm2EO9FBWUIKkUReJFyFKlBWVFzM0FjpjUK7RpJwGmtid
+        syC8SKQgiLfnXWZZHfhxznnP+/+9z/McsNvt8Dd6vR4sFssONpstGfccRpopACBHwGq1Auh0OhM+OBF6
+        jy3ScH19fQyz2ZzscDha/f7pmWg0+lkikbRSQVlZ2U8BXs6NjQ3S0tLCGo1GoB9KSkrAZDL94sjk5MSz
+        lZV3RK0uvU7DKpUKamtr01AQq8SUk5PDhkKhSFNTE0vD+fn5QNuoqamhnJyff73pdrsmcG8RDVRXV6fh
+        +mk85ESsBHoplUo2EAhE0Mzm5uZCXl4eGAwGwKraw+FXhKJSFdMKitra3ANra2ub2L5rR0AfsrOzWZ/P
+        F6moqGBlMhmo1WpGq9V6gsFZMjX1NCZxuVwTtJ2xsbHZgoIC2y4BfcnKymK9Xm+ksLCQRSwajaZrenqK
+        UMncXKySreHh4RCGL6Snp6f+I6ALmZmZ7C2PZ+mFULi42HGGYHuXExISrmxzEe9HRSLRvtRUzPP5fBCL
+        xUBLzsjIABwo4Azs43z+OunrI14uN3pOKm33cLkQFxe3AwogJkhMTNwlwNPMOIP+wPFmcpXH+/Cxru7L
+        MsM8XmKYznmGgVPbov8KFAqFVa+vHAgGw6S0VH3NnpTkeQIwt+V0EgxPvmEY9iVKZpBeDgeOCYW/K5BK
+        pTaDwTgUDr8l5eWaQblcbmvFMscBer0o+drRQTDsCzLMWSp4hLO6Rwe23UJDVVX17YWF90Sr1Y+kpKQ0
+        0JkUCwSAYbq59yFKvnV3Ewz7/Qxz/k9BY2XlobvLy+tEpzOMYm+N8fHxu/6OHd9GUXIHJd97egiGnz8A
+        uBSrADf3ra5+wpMN9wUCgROXJIiIfkL4iADZgyR3AdwYQQn9O0MAYQSAw+E08ni8fi6X68bXg8h+RIGI
+        aYfIXkSGKJEDHoDBmyhxAHRqcOEHEzUTuWlU89gAAAAASUVORK5CYII=
+</value>
+  </data>
+  <metadata name="uxTimer.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>273, 17</value>
   </metadata>
 </root>

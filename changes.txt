@@ -1,7 +1,13 @@
-﻿Version 1.3 (Ian Obermiller)
+﻿Version 1.3
  - Refactored code
  - Improved speed of populating and rendering the list
  - Added support for multiple search terms (space separated, ex. "fi cpp" will find "SomeFile.cpp" but not "SomeFile.h")
  - Don't show duplicate files (files that exist in multiple projects)
- - Start searching after the second character
- - Added checkboxes to allow opening multiple files (space to check, if nothing checked, it opens the selected one)
+ - Added checkboxes to allow opening multiple files (space to check, if nothing checked, it opens the selected one) - Added CamelCase search functionality.
+ - Optionally matching to start of file name.
+ - Removed external dependencies and non-solution files from search results.
+ - Added ignore patterns.
+ - Added configuration dialog. Settings are saved in the registry.
+ - Configurable max. number of displayed results.
+ - Waits for keystrokes in the search box, searches only after a small pause in typing.
+ - Refactored solution indexing and searching into background thread (currently disabled, can be enabled in registry). This can improve responsiveness of the UI in very large solutions. But is much slower in common cases and solution sizes up to couple thousand files.

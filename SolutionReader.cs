@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell.Interop;
+using System.Diagnostics;
 
 namespace QuickOpenFile
 {
@@ -11,12 +12,15 @@ namespace QuickOpenFile
     {
         List<SolutionFile> solutionFiles = new List<SolutionFile>();
         TraversalState traversalState = new TraversalState();
+        Options options;
 
-        public List<SolutionFile> GetSolutionFiles(IVsSolution solution)
+        public List<SolutionFile> GetSolutionFiles(IVsSolution solution, Options options)
         {
             //Get the solution service so we can traverse each project hierarchy contained within.
             traversalState.Clear();
             solutionFiles.Clear();
+            //solutionFiles = new List<SolutionFile>();
+            this.options = options;
             if (null != solution)
             {
                 IVsHierarchy solutionHierarchy = solution as IVsHierarchy;
@@ -148,30 +152,28 @@ namespace QuickOpenFile
         /// for each level in the recursion.</param>
         private void ProcessSolutionNode(IVsHierarchy hierarchy, uint itemid, int recursionLevel)
         {
-            object pVar;
             int hr;
 
-            //Get the name of the root node in question here and dump its value
-            hr = hierarchy.GetProperty(itemid, (int)__VSHPROPID.VSHPROPID_Name, out pVar);
+            // get name
+            object objName;
+            hr = hierarchy.GetProperty(itemid, (int)__VSHPROPID.VSHPROPID_Name, out objName);
+
+            if (recursionLevel == 0) traversalState.CurrentSolutionName = (string)objName;
+            if (recursionLevel == 1) traversalState.CurrentProjectName = (string)objName;
+
+            // skip non-member items (dependencies, files not referenced by the solution)
+            object objIsNonMember;
+            hr = hierarchy.GetProperty(itemid, (int)__VSHPROPID.VSHPROPID_IsNonMemberItem, out objIsNonMember);
+            if (objIsNonMember != null)
+                if ((bool)objIsNonMember)
+                    return;
+
             SolutionFile sr = new SolutionFile();
-            sr.Name = (string)pVar;
-
-            if (recursionLevel == 0) traversalState.CurrentSolutionName = (string)pVar;
-            if (recursionLevel == 1) traversalState.CurrentProjectName = (string)pVar;
-
-            sr.Path = traversalState.CurrentPath;
+            sr.Name = (string)objName;
             sr.Project = traversalState.CurrentProjectName;
             sr.ItemId = itemid;
-            hr = hierarchy.GetProperty(itemid, (int)__VSHPROPID.VSHPROPID_IconIndex, out pVar);
-            if (pVar != null) sr.IconIndex = (int)pVar;
-            hr = hierarchy.GetProperty(itemid, (int)__VSHPROPID.VSHPROPID_SaveName, out pVar);
-            if (pVar != null) sr.FilePath = (string)pVar;
-            hr = hierarchy.GetProperty(itemid, (int)__VSHPROPID.VSHPROPID_TypeName, out pVar);
-            if (pVar != null) sr.Type = (string)pVar;
-            hr = hierarchy.GetProperty(itemid, (int)__VSHPROPID.VSHPROPID_ItemSubType, out pVar);
-            if (pVar != null) sr.SubType = (string)pVar;
 
-            sr.FilePath = "";
+            // get canonical filename and last write time
             if (recursionLevel > 0 && itemid != VSConstants.VSITEMID_NIL && itemid != VSConstants.VSITEMID_ROOT)
             {
                 try
@@ -181,9 +183,9 @@ namespace QuickOpenFile
                     {
                         if (!string.IsNullOrEmpty(filePath) && System.IO.Path.IsPathRooted(filePath))
                         {
-                            sr.FilePath = filePath;
                             if (File.Exists(filePath))
                             {
+                                sr.FilePath = filePath;
                                 sr.LastWriteTime = File.GetLastWriteTime(filePath);
                             }
                         }
@@ -194,7 +196,26 @@ namespace QuickOpenFile
                 catch (Exception) { }
             }
 
-            sr.CreateListViewItem();
+            //Debug.Print("QOF" + recursionLevel + "> " + sr.ItemId + ", " + sr.Name + ", " + sr.Project + ", " + sr.FilePath + ", " + sr.LastWriteTime);
+
+            // ListViewItem is creation moved to the gui thread.
+            //sr.CreateListViewItem();
+
+            // Exclude empty names and paths (also non-existent files).
+            if (string.IsNullOrEmpty(sr.Name) || string.IsNullOrEmpty(sr.FilePath))
+                return;
+
+            // Exclude canonical names that appear to be directories
+            if (sr.FilePath.EndsWith("\\") || sr.FilePath.EndsWith("/"))
+                return;
+
+            // get icon
+            object objIconIndex;
+            hr = hierarchy.GetProperty(itemid, (int)__VSHPROPID.VSHPROPID_IconIndex, out objIconIndex);
+            if (objIconIndex != null) sr.IconIndex = (int)objIconIndex;
+            //TODO: look how to obtain item's icons for display in the list view
+            //    -> http://connect.microsoft.com/VisualStudio/feedback/details/520256/cannot-find-icon-for-vs2010-database-project
+
             solutionFiles.Add(sr);
         }
     }

@@ -25,6 +25,8 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <CopyVsixExtensionFiles>False</CopyVsixExtensionFiles>
     <CopyVsixExtensionLocation>C:\Users\Olivian\AppData\Local\Microsoft\VisualStudio\10.0Exp\Extensions\QuickOpenFile Developers\QuickOpenFile\1.3</CopyVsixExtensionLocation>
+    <CreateVsixContainer>True</CreateVsixContainer>
+    <DeployExtension>True</DeployExtension>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -59,8 +61,10 @@
     <Reference Include="System.Xml" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <Reference Include="UIAutomationProvider" />
     <Reference Include="WindowsBase" />
     <Reference Include="System.Xaml" />
+    <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="QuickOpenFileControl.cs">
@@ -80,6 +84,13 @@
     <Compile Include="QuickOpenFilePackage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PkgCmdID.cs" />
+    <Compile Include="OptionsDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="OptionsDialog.Designer.cs">
+      <DependentUpon>OptionsDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SearchEngine.cs" />
     <Compile Include="SolutionFile.cs" />
     <Compile Include="SolutionReader.cs" />
     <Compile Include="TraversalState.cs" />
@@ -93,6 +104,9 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="OptionsDialog.resx">
+      <DependentUpon>OptionsDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="VSPackage.resx">
       <MergeWithCTO>true</MergeWithCTO>
       <ManifestResourceName>VSPackage</ManifestResourceName>
@@ -105,6 +119,8 @@
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Content Include="changes.txt" />
+    <None Include="wrench-screwdriver-icon.png" />
+    <None Include="Resources\uxOptions.Image.png" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
