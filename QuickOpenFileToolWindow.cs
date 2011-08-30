@@ -96,7 +96,8 @@ namespace QuickOpenFile
                 {
                     control = new QuickOpenFileControl();
                     control.parentWindowPane = this;
-                    control.applicationRegistryKey = ((QuickOpenFilePackage)this.Package).ApplicationRegistryRoot.Name;
+                    control.applicationRegistryKey = "HKEY_CURRENT_USER\\Software\\Kutny.net";
+                    //control.applicationRegistryKey = ((QuickOpenFilePackage)this.Package).ApplicationRegistryRoot.Name;
                 }
                 return control;
             }
