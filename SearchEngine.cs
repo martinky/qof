@@ -53,9 +53,13 @@ namespace QuickOpenFile
             else
             {
                 if (index)
+                {
                     DoIndexSolution(options);
+                }
                 if (query != null)
+                {
                     DoSearch(query, options);
+                }
             }
         }
 
@@ -93,7 +97,9 @@ namespace QuickOpenFile
                 if (w.doIndex)
                     DoIndexSolution(w.options);
                 if (w.query != null)
+                {
                     DoSearch(w.query, w.options);
+                }
             }
             Debug.Print("QOF.SearchEngine: Search thread stopped.");
         }
@@ -112,29 +118,21 @@ namespace QuickOpenFile
         {
             IEnumerable<SolutionFile> result = null;
 
-            DateTime time1 = DateTime.Now;
+            var stopwatch = Stopwatch.StartNew();
             try
             {
                 if (String.IsNullOrWhiteSpace(query))
+                {
                     throw new ArgumentNullException("Empty search expression.");
+                }
 
-                Regex positiveTerm = MakeRegex(query, options);
-                var negativeTerms = options.IgnorePatterns.Select(nq => MakeRegex(nq, options));
+                var positiveTerms = MakeRegexes(query, options);
+                var negativeTerms = options.IgnorePatterns.SelectMany(nq => MakeRegexes(nq, options));
 
-                Debug.Print("QOF.SearchEngine: Searching for: '" + positiveTerm.ToString() + "' " + String.Join(" ", negativeTerms.Select(re => "NOT '" + re.ToString() + "'").ToArray()));
+                Debug.Print("QOF.SearchEngine: Searching for: '" + String.Join(" ", positiveTerms) + 
+                    "' " + String.Join(" ", negativeTerms.Select(re => "NOT '" + re.ToString() + "'")));
                 result = solutionFiles
-                    .Where(sr =>
-                    {
-                        // Positive regex match
-                        if (!positiveTerm.IsMatch(sr.Name))
-                            return false;
-
-                        // Negative regex match (ignore patterns)
-                        if (negativeTerms.Any(r => r.IsMatch(sr.Name)))
-                            return false;
-
-                        return true;
-                    })
+                    .Where(sr => positiveTerms.Any(r => r.IsMatch(sr.Name)) && !negativeTerms.Any(r => r.IsMatch(sr.Name)))
                     .Distinct(new DistinctByFilePath())
                     //TODO: show open files first
                     //TODO: for now, just sorts alphabetically (by Name, then by ProjectName, then by FilePath)
@@ -143,9 +141,13 @@ namespace QuickOpenFile
                     .ToArray();
 
                 if (result.Count() > 0)
+                {
                     NotifyStatusText("Ready.");
+                }
                 else
+                {
                     NotifyStatusText("No files match the expression.");
+                }
             }
             catch (ArgumentNullException)
             {
@@ -155,16 +157,14 @@ namespace QuickOpenFile
             {
                 NotifyStatusText("Invalid search expression.");
             }
-            DateTime time2 = DateTime.Now;
-            Debug.Print("QOF.SearchEngine: Found " + (result == null ? 0 : result.Count()) + " solution files in " + (time2 - time1) + ".");
+
+            Debug.Print("QOF.SearchEngine: Found " + (result == null ? 0 : result.Count()) + " solution files in " + stopwatch.Elapsed + ".");
 
             NotifyResults(result);
         }
 
-        private Regex MakeRegex(string query, Options options)
+        private IEnumerable<Regex> MakeRegexes(string query, Options options)
         {
-            RegexOptions regexOptions = RegexOptions.None;
-            
             // replace internal whitespace with single * wildcards
             if (options.SpaceAsWildcard)
                 query = ReplaceWhitespaceWithWildcard(query);
@@ -181,18 +181,17 @@ namespace QuickOpenFile
             
             // search using camel case
             if (options.UseCamelCase)
-                query = MakeCamelCaseExpression(query);
-            else
-                regexOptions = RegexOptions.IgnoreCase;
+            {
+                yield return new Regex(MakeCamelCaseExpression(query));
+            }
 
-            return new Regex(query, regexOptions);
+            yield return new Regex(query, RegexOptions.IgnoreCase);
         }
 
         private string MakeCamelCaseExpression(string query)
         {
             // makes an expression that matches any number of lower case letters
             // before the second (and every further) capital letter
-
             string s = "";
             bool wasUpperChar = false;
             for (int i = 0; i < query.Length; i++)
@@ -213,15 +212,14 @@ namespace QuickOpenFile
             return s;
         }
 
+        private static readonly string charsToEscape = @"/+|(){}[].^$#";
         private string EscapeRegularExpression(string query)
         {
             string s = "";
             for (int i = 0; i < query.Length; i++)
             {
                 char c = query[i];
-                if (c == '/' || c == '+' || c == '|' || c == '(' || c == ')' ||
-                    c == '[' || c == ']' || c == '{' || c == '}' || c == '.' ||
-                    c == '^' || c == '$' || c == '#' || Char.IsWhiteSpace(c))
+                if (charsToEscape.Contains(c) || Char.IsWhiteSpace(c))
                     s += "\\" + c;
                 else
                     s += c;
@@ -255,24 +253,24 @@ namespace QuickOpenFile
         {
             if (isAsync)
             {
-                object[] args = new object[1];
-                args[0] = text;
-                notifyControl.BeginInvoke(new SetStatusTextDelegate(notifyControl.SetStatusText), args);
+                notifyControl.BeginInvoke(new SetStatusTextDelegate(notifyControl.SetStatusText), new[] { text });
             }
             else
+            {
                 notifyControl.SetStatusText(text);
+            }
         }
 
         private void NotifyResults(IEnumerable<SolutionFile> results)
         {
             if (isAsync)
             {
-                object[] args = new object[1];
-                args[0] = results;
-                notifyControl.BeginInvoke(new ShowResultsDelegate(notifyControl.ShowResults), args);
+                notifyControl.BeginInvoke(new ShowResultsDelegate(notifyControl.ShowResults), new[] { results });
             }
             else
+            {
                 notifyControl.ShowResults(results);
+            }
         }
 
         class WorkItem
@@ -294,7 +292,11 @@ namespace QuickOpenFile
         {
             public bool Equals(SolutionFile x, SolutionFile y)
             {
-                if (x == null ^ y == null) return false;
+                if (x == null ^ y == null)
+                {
+                    return false;
+                }
+
                 return x.FilePath.Equals(y.FilePath, StringComparison.InvariantCultureIgnoreCase);
             }
 
