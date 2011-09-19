@@ -8,25 +8,25 @@ using System.Diagnostics;
 
 namespace QuickOpenFile
 {
-    public class SolutionReader
+    public sealed class SolutionReader
     {
-        List<SolutionFile> solutionFiles = new List<SolutionFile>();
-        TraversalState traversalState = new TraversalState();
-        Options options;
+        private List<SolutionFile> solutionFiles = new List<SolutionFile>();
+        private TraversalState traversalState = new TraversalState();
+        private Settings settings;
 
-        public List<SolutionFile> GetSolutionFiles(IVsSolution solution, Options options)
+        public List<SolutionFile> GetSolutionFiles(IVsSolution solution, Settings settings)
         {
-            //Get the solution service so we can traverse each project hierarchy contained within.
+            this.settings = settings;
+
             traversalState.Clear();
             solutionFiles.Clear();
-            //solutionFiles = new List<SolutionFile>();
-            this.options = options;
+
+            // Get the solution service so we can traverse each project hierarchy contained within.
             if (null != solution)
             {
                 IVsHierarchy solutionHierarchy = solution as IVsHierarchy;
                 if (null != solutionHierarchy)
                 {
-                    //OutputCommandString("\n\nTraverse All Items Recursively:\n");
                     EnumHierarchyItems(solutionHierarchy, VSConstants.VSITEMID_ROOT, 0, true, false);
                 }
             }

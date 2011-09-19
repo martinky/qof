@@ -11,6 +11,8 @@ namespace QuickOpenFile
 {
     public class SearchEngine
     {
+        private Settings settings;
+
         public SearchEngine(QuickOpenFileControl notifyControl, bool async = false)
         {
             isAsync = async;
@@ -31,6 +33,11 @@ namespace QuickOpenFile
             }
         }
 
+        public void SetPackage(QuickOpenFilePackage package)
+        {
+            this.settings = package.Settings;
+        }
+
         /// <summary>
         /// Orders a new search of the solution. The UI is notified
         /// asynchronously when the search is finished.
@@ -38,7 +45,7 @@ namespace QuickOpenFile
         /// <param name="query">Search expression.</param>
         /// <param name="options">Search options.</param>
         /// <param name="index">If true, the solution is indexed first.</param>
-        public void Search(string query, Options options, bool index)
+        public void Search(string query, bool index)
         {
             if (query == null && !index)
                 return;
@@ -46,7 +53,7 @@ namespace QuickOpenFile
             if (isAsync)
             {
                 mutex.WaitOne();
-                work = new WorkItem(options, query, index);
+                work = new WorkItem(settings, query, index);
                 mutex.ReleaseMutex();
                 semaphore.Release();
             }
@@ -54,11 +61,11 @@ namespace QuickOpenFile
             {
                 if (index)
                 {
-                    DoIndexSolution(options);
+                    DoIndexSolution();
                 }
                 if (query != null)
                 {
-                    DoSearch(query, options);
+                    DoSearch(query);
                 }
             }
         }
@@ -95,26 +102,26 @@ namespace QuickOpenFile
                 if (w == null)
                     continue;
                 if (w.doIndex)
-                    DoIndexSolution(w.options);
+                    DoIndexSolution();
                 if (w.query != null)
                 {
-                    DoSearch(w.query, w.options);
+                    DoSearch(w.query);
                 }
             }
             Debug.Print("QOF.SearchEngine: Search thread stopped.");
         }
 
-        private void DoIndexSolution(Options options)
+        private void DoIndexSolution()
         {
             NotifyStatusText("Indexing...");
             DateTime time1 = DateTime.Now;
-            solutionFiles = solutionReader.GetSolutionFiles(notifyControl.GetSolution(), options);
+            solutionFiles = solutionReader.GetSolutionFiles(notifyControl.GetSolution(), settings);
             DateTime time2 = DateTime.Now;
             Debug.Print("QOF.SearchEngine: Indexed " + solutionFiles.Count + " solution files in " + (time2 - time1) + ".");
             NotifyStatusText("Ready.");
         }
 
-        private void DoSearch(string query, Options options)
+        private void DoSearch(string query)
         {
             IEnumerable<SolutionFile> result = null;
 
@@ -126,8 +133,8 @@ namespace QuickOpenFile
                     throw new ArgumentNullException("Empty search expression.");
                 }
 
-                var positiveTerms = MakeRegexes(query, options);
-                var negativeTerms = options.IgnorePatterns.SelectMany(nq => MakeRegexes(nq, options));
+                var positiveTerms = MakeRegexes(query);
+                var negativeTerms = settings.IgnorePatterns.SelectMany(nq => MakeRegexes(nq));
 
                 Debug.Print("QOF.SearchEngine: Searching for: '" + String.Join(" ", positiveTerms) + 
                     "' " + String.Join(" ", negativeTerms.Select(re => "NOT '" + re.ToString() + "'")));
@@ -163,10 +170,10 @@ namespace QuickOpenFile
             NotifyResults(result);
         }
 
-        private IEnumerable<Regex> MakeRegexes(string query, Options options)
+        private IEnumerable<Regex> MakeRegexes(string query)
         {
             // replace internal whitespace with single * wildcards
-            if (options.SpaceAsWildcard)
+            if (settings.SpaceAsWildcard)
                 query = ReplaceWhitespaceWithWildcard(query);
             
             // escape control characters (search 'as is' for all other characters than ?, *)
@@ -176,16 +183,23 @@ namespace QuickOpenFile
             query = query.Trim().Replace('?', '.').Replace("*", ".*");
             
             // match patter at the begining
-            if (!options.SearchInTheMiddle)
+            if (!settings.SearchInTheMiddle)
                 query = "^" + query;
-            
+
+            var regexOptions = RegexOptions.IgnoreCase;
+
             // search using camel case
-            if (options.UseCamelCase)
+            if (settings.UseCamelCase)
             {
                 yield return new Regex(MakeCamelCaseExpression(query));
+
+                if (char.IsUpper(query.FirstOrDefault()))
+                {
+                    regexOptions = RegexOptions.None;
+                }
             }
 
-            yield return new Regex(query, RegexOptions.IgnoreCase);
+            yield return new Regex(query, regexOptions);
         }
 
         private string MakeCamelCaseExpression(string query)
@@ -275,12 +289,12 @@ namespace QuickOpenFile
 
         class WorkItem
         {
-            public Options options;
+            public Settings options;
             public String query;
             public bool doIndex;
 
             public WorkItem() { }
-            public WorkItem(Options options, String query, bool doIndex)
+            public WorkItem(Settings options, String query, bool doIndex)
             {
                 this.options = options;
                 this.query = query;

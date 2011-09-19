@@ -46,8 +46,6 @@ namespace QuickOpenFile
         // Initializes the search UI and indexes the opened solution for fast search.
         public void InitControl()
         {
-            //control.BeginInvoke((Action)(() => control.InitOnShow()));
-            // this seems to be called from the gui thread, no need to BeginInvoke
             control.InitControl();
         }
 
@@ -115,6 +113,9 @@ namespace QuickOpenFile
             }
         }
 
-
+        public void SetPackage(QuickOpenFilePackage package)
+        {
+            control.SetPackage(package);
+        }
     }
 }

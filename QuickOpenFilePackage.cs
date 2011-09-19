@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio;
 
 namespace QuickOpenFile
 {
@@ -28,7 +29,8 @@ namespace QuickOpenFile
     [ProvideMenuResource("Menus.ctmenu", 1)]
     // This attribute registers a tool window exposed by this package.
     [ProvideToolWindow(typeof(QuickOpenFileToolWindow))]
-    [Guid(GuidList.guidQuickOpenFileVS2010PkgString)]
+    [ProvideOptionPage(typeof(Settings), "Quick Open File", "General", 0, 0, true)]
+    [Guid(Guids.Pakage)]
     public sealed class QuickOpenFilePackage : Package
     {
         /// <summary>
@@ -43,6 +45,19 @@ namespace QuickOpenFile
             Debug.Print(string.Format(CultureInfo.CurrentCulture, "Entering constructor for: {0}", this.ToString()));
         }
 
+        public Settings Settings
+        {
+            get
+            {
+                return GetDialogPage(typeof(Settings)) as Settings;
+            }
+        }
+
+        public void ShowSettings()
+        {
+            ShowOptionPage(typeof(Settings));
+        }
+
         /// <summary>
         /// This function is called when the user clicks the menu item that shows the 
         /// tool window. See the Initialize method to see how the menu item is associated to 
@@ -53,15 +68,15 @@ namespace QuickOpenFile
             // Get the instance number 0 of this tool window. This window is single instance so this instance
             // is actually the only one.
             // The last flag is set to true so that if the tool window does not exists it will be created.
-            ToolWindowPane window = this.FindToolWindow(typeof(QuickOpenFileToolWindow), 0, true);
+            var window = this.FindToolWindow(typeof(QuickOpenFileToolWindow), 0, true) as QuickOpenFileToolWindow;
             if ((null == window) || (null == window.Frame))
             {
                 throw new NotSupportedException(Resources.CannotCreateWindow);
             }
+            window.SetPackage(this);
+            window.InitControl();
             IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
-            Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
-            QuickOpenFileToolWindow tv = (QuickOpenFileToolWindow)window;
-            tv.InitControl();
+            ErrorHandler.ThrowOnFailure(windowFrame.Show());
         }
 
 
@@ -83,7 +98,7 @@ namespace QuickOpenFile
             if (null != mcs)
             {
                 // Create the command for the tool window
-                CommandID toolwndCommandID = new CommandID(GuidList.guidQuickOpenFileVS2010CmdSet, (int)PkgCmdIDList.cmdidAOToolWindow);
+                CommandID toolwndCommandID = new CommandID(Guids.CmdSetGuid, (int)PkgCmdIDList.cmdidAOToolWindow);
                 MenuCommand menuToolWin = new MenuCommand(ShowToolWindow, toolwndCommandID);
                 mcs.AddCommand(menuToolWin);
             }

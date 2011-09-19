@@ -15,7 +15,8 @@ namespace QuickOpenFile
     /// </summary>
     public partial class QuickOpenFileControl : UserControl, IVsUIWin32Element
     {
-        private Options options;
+        private QuickOpenFilePackage package;
+        private Settings settings;
         private SearchEngine searchEngine;
         public QuickOpenFileToolWindow parentWindowPane;
         public string applicationRegistryKey;
@@ -25,10 +26,15 @@ namespace QuickOpenFile
         public QuickOpenFileControl()
         {
             InitializeComponent();
-            options = new Options();
-            options.Load(applicationRegistryKey);
-            searchEngine = new SearchEngine(this, options.AsynchronousSearch);
+            searchEngine = new SearchEngine(this);
             doIndex = false;
+        }
+
+        public void SetPackage(QuickOpenFilePackage package)
+        {
+            this.package = package;
+            this.settings = package.Settings;
+            searchEngine.SetPackage(package);
         }
 
         // This method is called every time the Quick Open File command is
@@ -43,8 +49,8 @@ namespace QuickOpenFile
 
             // (re)index the solution and repeat last search
             ShowResults(null);
-            uxFiles.CheckBoxes = options.ShowCheckboxes;
-            SearchAfterWhile(true, options.LongKeystrokeDelay);
+            uxFiles.CheckBoxes = package.Settings.ShowCheckboxes;
+            SearchAfterWhile(true, package.Settings.LongKeystrokeDelay);
 
             ActiveControl = uxSearch;
         }
@@ -53,12 +59,11 @@ namespace QuickOpenFile
         {
             // Terminate search engine thread.
             searchEngine.Stop();
-            options.Save(applicationRegistryKey);
         }
 
         private bool ShouldLoadAllResults()
         {
-            if (options.ResultsLimit > 0 && uxFiles.SelectedItems.Count > 0 && IsLoadPlaceholder(uxFiles.SelectedItems[0]))
+            if (settings.ResultsLimit > 0 && uxFiles.SelectedItems.Count > 0 && IsLoadPlaceholder(uxFiles.SelectedItems[0]))
                 return true;
             else
                 return false;
@@ -122,10 +127,10 @@ namespace QuickOpenFile
             uxFiles.BeginUpdate();
             uxFiles.Items.Clear();
 
-            if (results != null && options.ResultsLimit > 0 && results.Count() > options.ResultsLimit)
+            if (results != null && settings.ResultsLimit > 0 && results.Count() > settings.ResultsLimit)
             {
-                resultsRest = results.Skip(options.ResultsLimit);
-                results = results.Take(options.ResultsLimit);
+                resultsRest = results.Skip(settings.ResultsLimit);
+                results = results.Take(settings.ResultsLimit);
             }
             else
                 resultsRest = null;
@@ -207,10 +212,14 @@ namespace QuickOpenFile
             doIndex = doIndex | index;
 
             if (delay < 0)
-                delay = uxSearch.Text.Trim().Length > 2 ? options.ShortKeystrokeDelay : options.LongKeystrokeDelay;
+            {
+                delay = uxSearch.Text.Trim().Length > 2 ? settings.ShortKeystrokeDelay : settings.LongKeystrokeDelay;
+            }
 
-            if (delay <= 0 || (doIndex && options.AsynchronousSearch))
+            if (delay <= 0 || (doIndex && settings.AsynchronousSearch))
+            {
                 SearchNow();
+            }
             else
             {
                 uxTimer.Stop();
@@ -223,7 +232,7 @@ namespace QuickOpenFile
         {
             // This performs the actual search.
             uxTimer.Stop();
-            searchEngine.Search(uxSearch.Text.Trim(), options, doIndex);
+            searchEngine.Search(uxSearch.Text.Trim(), doIndex);
             doIndex = false;
         }
 
@@ -366,16 +375,7 @@ namespace QuickOpenFile
 
         private void uxOptions_Click(object sender, EventArgs e)
         {
-            OptionsDialog dlg = new OptionsDialog(applicationRegistryKey);
-            if (dlg.ShowDialog() == DialogResult.OK)
-            {
-                // settings may changed: reload options
-                options.LoadDefaults();
-                options.Load(applicationRegistryKey);
-                // reindex solution, repeat last search
-                InitControl();
-            }
-            ActiveControl = uxSearch;
+            this.package.ShowSettings();
         }
 
         #endregion
@@ -411,6 +411,5 @@ namespace QuickOpenFile
         }
 
         #endregion
-
     }
 }
