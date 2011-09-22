@@ -71,13 +71,18 @@ namespace QuickOpenFile
                 return true;
             }
             else
+            {
                 return base.PreProcessMessage(ref m);
+            }
         }
 
         protected override void Dispose(bool disposing)
         {
             if (control != null)
+            {
                 control.CleanUp();
+            }
+
             base.Dispose(disposing);
         }
 
@@ -94,9 +99,8 @@ namespace QuickOpenFile
                 {
                     control = new QuickOpenFileControl();
                     control.parentWindowPane = this;
-                    control.applicationRegistryKey = "HKEY_CURRENT_USER\\Software\\Kutny.net";
-                    //control.applicationRegistryKey = ((QuickOpenFilePackage)this.Package).ApplicationRegistryRoot.Name;
                 }
+
                 return control;
             }
         }

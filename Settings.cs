@@ -45,11 +45,6 @@
         public bool ShowCheckboxes { get; set; }
 
         [Category("Advanced")]
-        [DisplayName("Asynchronous search")]
-        [Description(@"Search on a separate thread.")]
-        public bool AsynchronousSearch { get; set; } // changing this only takes effect after VS is restarted
-
-        [Category("Advanced")]
         [DisplayName("Short keystroke dealy")]
         [Description(@"Time to wait before searching after typing 2 or more characters.")]
         public int ShortKeystrokeDelay { get; set; }
@@ -68,7 +63,6 @@
             IgnorePatterns = new string[0];
             ResultsLimit = 50;
             ShowCheckboxes = false;
-            AsynchronousSearch = false;
             ShortKeystrokeDelay = 300;
             LongKeystrokeDelay = 450;
         }

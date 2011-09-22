@@ -6,6 +6,7 @@ using System.Threading;
 using Microsoft.VisualStudio.Shell.Interop;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace QuickOpenFile
 {
@@ -13,24 +14,11 @@ namespace QuickOpenFile
     {
         private Settings settings;
 
-        public SearchEngine(QuickOpenFileControl notifyControl, bool async = false)
+        public SearchEngine(QuickOpenFileControl notifyControl)
         {
-            isAsync = async;
             this.notifyControl = notifyControl;
-            work = null;
-            cancel = false;
             solutionFiles = new List<SolutionFile>();
             solutionReader = new SolutionReader();
-            if (isAsync)
-            {
-                mutex = new Mutex();
-                semaphore = new Semaphore(0, 999999);
-                Debug.Print("QOF.SearchEngine: Starting search thread.");
-                worker = new Thread(this.WorkerProc);
-                worker.Priority = ThreadPriority.Highest;
-                worker.Name = "QuickOpenFile.SearchEngine";
-                worker.Start();
-            }
         }
 
         public void SetPackage(QuickOpenFilePackage package)
@@ -50,14 +38,7 @@ namespace QuickOpenFile
             if (query == null && !index)
                 return;
 
-            if (isAsync)
-            {
-                mutex.WaitOne();
-                work = new WorkItem(settings, query, index);
-                mutex.ReleaseMutex();
-                semaphore.Release();
-            }
-            else
+            task = new Task(() =>
             {
                 if (index)
                 {
@@ -67,7 +48,10 @@ namespace QuickOpenFile
                 {
                     DoSearch(query);
                 }
-            }
+
+            });
+
+            task.Start();
         }
 
         /// <summary>
@@ -75,50 +59,15 @@ namespace QuickOpenFile
         /// </summary>
         public void Stop()
         {
-            if (isAsync)
-            {
-                mutex.WaitOne();
-                cancel = true;
-                work = null;
-                mutex.ReleaseMutex();
-                semaphore.Release();
-                Debug.Print("QOF.SearchEngine: Stopping search thread.");
-            }
-        }
-
-        private void WorkerProc()
-        {
-            Debug.Print("QOF.SearchEngine: Search thread started.");
-            bool breakNow = false;
-            while (!breakNow)
-            {
-                semaphore.WaitOne();
-                mutex.WaitOne();
-                breakNow = cancel;
-                WorkItem w = work;
-                work = null;
-                mutex.ReleaseMutex();
-
-                if (w == null)
-                    continue;
-                if (w.doIndex)
-                    DoIndexSolution();
-                if (w.query != null)
-                {
-                    DoSearch(w.query);
-                }
-            }
-            Debug.Print("QOF.SearchEngine: Search thread stopped.");
         }
 
         private void DoIndexSolution()
         {
             NotifyStatusText("Indexing...");
-            DateTime time1 = DateTime.Now;
+            var stopwatch = Stopwatch.StartNew();
             solutionFiles = solutionReader.GetSolutionFiles(notifyControl.GetSolution(), settings);
-            DateTime time2 = DateTime.Now;
-            Debug.Print("QOF.SearchEngine: Indexed " + solutionFiles.Count + " solution files in " + (time2 - time1) + ".");
-            NotifyStatusText("Ready.");
+            Debug.Print("QOF.SearchEngine: Indexed " + solutionFiles.Count + " solution files in " + stopwatch.Elapsed + ".");
+            NotifyStatusText("Ready");
         }
 
         private void DoSearch(string query)
@@ -136,7 +85,7 @@ namespace QuickOpenFile
                 var positiveTerms = MakeRegexes(query);
                 var negativeTerms = settings.IgnorePatterns.SelectMany(nq => MakeRegexes(nq));
 
-                Debug.Print("QOF.SearchEngine: Searching for: '" + String.Join(" ", positiveTerms) + 
+                Debug.Print("QOF.SearchEngine: Searching for: '" + String.Join(" ", positiveTerms) +
                     "' " + String.Join(" ", negativeTerms.Select(re => "NOT '" + re.ToString() + "'")));
                 result = solutionFiles
                     .Where(sr => positiveTerms.Any(r => r.IsMatch(sr.Name)) && !negativeTerms.Any(r => r.IsMatch(sr.Name)))
@@ -174,17 +123,21 @@ namespace QuickOpenFile
         {
             // replace internal whitespace with single * wildcards
             if (settings.SpaceAsWildcard)
+            {
                 query = ReplaceWhitespaceWithWildcard(query);
-            
+            }
+
             // escape control characters (search 'as is' for all other characters than ?, *)
             query = EscapeRegularExpression(query);
-            
+
             // replace ? and * wildcards in the string with proper regex syntax
             query = query.Trim().Replace('?', '.').Replace("*", ".*");
-            
-            // match patter at the begining
+
+            // match pattern at the begining
             if (!settings.SearchInTheMiddle)
+            {
                 query = "^" + query;
+            }
 
             var regexOptions = RegexOptions.IgnoreCase;
 
@@ -265,41 +218,12 @@ namespace QuickOpenFile
 
         private void NotifyStatusText(string text)
         {
-            if (isAsync)
-            {
-                notifyControl.BeginInvoke(new SetStatusTextDelegate(notifyControl.SetStatusText), new[] { text });
-            }
-            else
-            {
-                notifyControl.SetStatusText(text);
-            }
+            notifyControl.BeginInvoke((Action)(() => notifyControl.SetStatusText(text)));
         }
 
         private void NotifyResults(IEnumerable<SolutionFile> results)
         {
-            if (isAsync)
-            {
-                notifyControl.BeginInvoke(new ShowResultsDelegate(notifyControl.ShowResults), new[] { results });
-            }
-            else
-            {
-                notifyControl.ShowResults(results);
-            }
-        }
-
-        class WorkItem
-        {
-            public Settings options;
-            public String query;
-            public bool doIndex;
-
-            public WorkItem() { }
-            public WorkItem(Settings options, String query, bool doIndex)
-            {
-                this.options = options;
-                this.query = query;
-                this.doIndex = doIndex;
-            }
+            notifyControl.BeginInvoke((Action)(() => notifyControl.ShowResults(results)));
         }
 
         class DistinctByFilePath : IEqualityComparer<SolutionFile>
@@ -320,17 +244,9 @@ namespace QuickOpenFile
             }
         }
 
-        private delegate void SetStatusTextDelegate(string text);
-        private delegate void ShowResultsDelegate(IEnumerable<SolutionFile> results);
-
-        bool isAsync;
-        Thread worker;
-        Mutex mutex;
-        Semaphore semaphore;
-        volatile bool cancel;
-        volatile WorkItem work;
-        QuickOpenFileControl notifyControl;
-        List<SolutionFile> solutionFiles;
-        SolutionReader solutionReader;
+        private QuickOpenFileControl notifyControl;
+        private List<SolutionFile> solutionFiles;
+        private SolutionReader solutionReader;
+        private Task task;
     }
 }
