@@ -107,7 +107,9 @@ namespace QuickOpenFile
                 }
 
                 if (success)
+                {
                     parentWindowPane.HideToolWindow();
+                }
             }
         }
 

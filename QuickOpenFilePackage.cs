@@ -68,7 +68,7 @@ namespace QuickOpenFile
             // Get the instance number 0 of this tool window. This window is single instance so this instance
             // is actually the only one.
             // The last flag is set to true so that if the tool window does not exists it will be created.
-            var window = this.FindToolWindow(typeof(QuickOpenFileToolWindow), 0, true) as QuickOpenFileToolWindow;
+            var window = this.FindToolWindow(typeof(QuickOpenFileToolWindow), 0, false) as QuickOpenFileToolWindow;
             if ((null == window) || (null == window.Frame))
             {
                 throw new NotSupportedException(Resources.CannotCreateWindow);
@@ -92,6 +92,11 @@ namespace QuickOpenFile
         {
             Debug.Print(string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
             base.Initialize();
+
+            var window = this.CreateToolWindow(typeof(QuickOpenFileToolWindow), 0) as QuickOpenFileToolWindow;
+            
+            window.SetPackage(this);
+            window.InitControl();
 
             // Add our command handlers for menu (commands must exist in the .vsct file)
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
