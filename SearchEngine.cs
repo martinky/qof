@@ -51,7 +51,6 @@ namespace QuickOpenFile
             NotifyStatusText("Indexing...");
             var stopwatch = Stopwatch.StartNew();
             solutionFiles = solutionReader.GetSolutionFiles(notifyControl.GetSolution(), settings);
-            Thread.Sleep(5000);
             initialIndexingComplete.Set();
             Debug.Print("QOF.SearchEngine: Indexed " + solutionFiles.Count + " solution files in " + stopwatch.Elapsed + ".");
             NotifyStatusText("Ready");

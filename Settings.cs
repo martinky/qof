@@ -68,8 +68,8 @@
             IgnorePatterns = new string[0];
             ResultsLimit = 50;
             OpenMultipleFiles = false;
-            ShortKeystrokeDelay = 300;
-            LongKeystrokeDelay = 450;
+            ShortKeystrokeDelay = 0;
+            LongKeystrokeDelay = 0;
             AutoColumnResize = true;
         }
     }
