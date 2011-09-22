@@ -27,6 +27,7 @@
     <CopyVsixExtensionLocation>C:\Users\Olivian\AppData\Local\Microsoft\VisualStudio\10.0Exp\Extensions\QuickOpenFile Developers\QuickOpenFile\1.3</CopyVsixExtensionLocation>
     <CreateVsixContainer>True</CreateVsixContainer>
     <DeployExtension>True</DeployExtension>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -67,6 +68,7 @@
     <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="NativeMethods.cs" />
     <Compile Include="Settings.cs">
       <SubType>Component</SubType>
     </Compile>

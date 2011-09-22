@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace QuickOpenFile
 {
-    public class SearchEngine
+    public sealed class SearchEngine : IDisposable
     {
         private Settings settings;
 
@@ -33,45 +33,34 @@ namespace QuickOpenFile
         /// <param name="query">Search expression.</param>
         /// <param name="options">Search options.</param>
         /// <param name="index">If true, the solution is indexed first.</param>
-        public void Search(string query, bool index)
+        public void Search(string query)
         {
-            if (query == null && !index)
+            if (query == null)
                 return;
 
-            task = new Task(() =>
-            {
-                if (index)
-                {
-                    DoIndexSolution();
-                }
-                if (query != null)
-                {
-                    DoSearch(query);
-                }
-
-            });
-
-            task.Start();
+            task = Task.Factory.StartNew(() => SearchInternal(query));
         }
 
-        /// <summary>
-        /// Signals the worker thread to stop.
-        /// </summary>
-        public void Stop()
+        public void Index(Action andThen)
         {
+            Task.Factory.StartNew(() => IndexSolution()).ContinueWith((t) => andThen());
         }
 
-        private void DoIndexSolution()
+        private void IndexSolution()
         {
             NotifyStatusText("Indexing...");
             var stopwatch = Stopwatch.StartNew();
             solutionFiles = solutionReader.GetSolutionFiles(notifyControl.GetSolution(), settings);
+            Thread.Sleep(5000);
+            initialIndexingComplete.Set();
             Debug.Print("QOF.SearchEngine: Indexed " + solutionFiles.Count + " solution files in " + stopwatch.Elapsed + ".");
             NotifyStatusText("Ready");
         }
 
-        private void DoSearch(string query)
+        private void SearchInternal(string query)
         {
+            initialIndexingComplete.WaitOne();
+
             IEnumerable<SolutionFile> result = null;
 
             var stopwatch = Stopwatch.StartNew();
@@ -91,14 +80,13 @@ namespace QuickOpenFile
                     .Where(sr => positiveTerms.Any(r => r.IsMatch(sr.Name)) && !negativeTerms.Any(r => r.IsMatch(sr.Name)))
                     .Distinct(new DistinctByFilePath())
                     //TODO: show open files first
-                    //TODO: for now, just sorts alphabetically (by Name, then by ProjectName, then by FilePath)
-                    .OrderBy(item => item.LastWriteTime)
+                    .OrderBy(item => item.Name).ThenBy(i => i.Project)
                     // force to execute the query now (in try block)
                     .ToArray();
 
                 if (result.Count() > 0)
                 {
-                    NotifyStatusText("Ready.");
+                    NotifyStatusText("Ready");
                 }
                 else
                 {
@@ -107,14 +95,14 @@ namespace QuickOpenFile
             }
             catch (ArgumentNullException)
             {
-                NotifyStatusText("Ready.");
+                NotifyStatusText("Ready");
             }
             catch (ArgumentException)
             {
                 NotifyStatusText("Invalid search expression.");
             }
 
-            Debug.Print("QOF.SearchEngine: Found " + (result == null ? 0 : result.Count()) + " solution files in " + stopwatch.Elapsed + ".");
+            Debug.Print("QOF.SearchEngine: Found " + (result == null ? 0 : result.Count()) + " matching files in " + stopwatch.Elapsed + ".");
 
             NotifyResults(result);
         }
@@ -248,5 +236,15 @@ namespace QuickOpenFile
         private List<SolutionFile> solutionFiles;
         private SolutionReader solutionReader;
         private Task task;
+        private ManualResetEvent initialIndexingComplete = new ManualResetEvent(false);
+
+        #region IDisposable Members
+
+        public void Dispose()
+        {
+            initialIndexingComplete.Close();
+        }
+
+        #endregion
     }
 }

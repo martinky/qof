@@ -6,11 +6,8 @@ namespace QuickOpenFile
     public class SolutionFile
     {
         public string Name { get; set; }
-        //public string Path { get; set; }
         public string FilePath { get; set; }
         public string Project { get; set; }
-        //public string Type { get; set; }
-        //public string SubType { get; set; }
         public uint ItemId { get; set; }
         public int IconIndex { get; set; }
         public System.DateTime LastWriteTime { get; set; }
@@ -19,9 +16,12 @@ namespace QuickOpenFile
         {
             get
             {
-                if (lvItem == null)
+                if (listViewItem == null)
+                {
                     CreateListViewItem();
-                return lvItem;
+                }
+
+                return listViewItem;
             }
         }
 
@@ -31,12 +31,12 @@ namespace QuickOpenFile
             // indexing and searching has been moved to background thread, the
             // list view item (which is a GUI class) must be created from the UI
             // thread, just before adding to the listbox.
-            lvItem = new ListViewItem(Name);
-            lvItem.SubItems.Add(Project);
-            lvItem.SubItems.Add(FilePath);
-            lvItem.Tag = this;
+            listViewItem = new ListViewItem(Name);
+            listViewItem.SubItems.Add(Project);
+            listViewItem.SubItems.Add(FilePath);
+            listViewItem.Tag = this;
         }
 
-        private ListViewItem lvItem;
+        private ListViewItem listViewItem;
     }
 }

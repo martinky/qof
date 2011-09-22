@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Security.Permissions;
-using System.Text.RegularExpressions;
 using System.Windows.Forms;
-using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 
 namespace QuickOpenFile
@@ -20,14 +17,12 @@ namespace QuickOpenFile
         private SearchEngine searchEngine;
         public QuickOpenFileToolWindow parentWindowPane;
         public string applicationRegistryKey;
-        bool doIndex;
         IEnumerable<SolutionFile> resultsRest;
 
         public QuickOpenFileControl()
         {
             InitializeComponent();
             searchEngine = new SearchEngine(this);
-            doIndex = false;
         }
 
         public void SetPackage(QuickOpenFilePackage package)
@@ -42,31 +37,24 @@ namespace QuickOpenFile
         // subsequent incremental searches. Focuses the search text box.
         public void InitControl()
         {
-            Focus();
-            uxSearch.Focus();
-            uxSearch.SelectAll();
             System.Diagnostics.Debug.Print("QOFControl.InitOnShow() " + this.Visible);
 
             // (re)index the solution and repeat last search
-            ShowResults(null);
-            uxFiles.CheckBoxes = package.Settings.ShowCheckboxes;
-            SearchAfterWhile(true, package.Settings.LongKeystrokeDelay);
+            searchEngine.Index(andThen: SearchNow);
 
+            uxFiles.CheckBoxes = package.Settings.OpenMultipleFiles;
+
+            Focus();
+            uxSearch.Focus();
+            uxSearch.SelectAll();
             ActiveControl = uxSearch;
-        }
-
-        public void CleanUp()
-        {
-            // Terminate search engine thread.
-            searchEngine.Stop();
         }
 
         private bool ShouldLoadAllResults()
         {
-            if (settings.ResultsLimit > 0 && uxFiles.SelectedItems.Count > 0 && IsLoadPlaceholder(uxFiles.SelectedItems[0]))
-                return true;
-            else
-                return false;
+            return settings.ResultsLimit > 0 &&
+                uxFiles.SelectedItems.Count > 0 &&
+                IsLoadPlaceholder(uxFiles.SelectedItems[0]);
         }
 
         private IEnumerable<SolutionFile> GetSelectedSolutionFiles()
@@ -113,7 +101,9 @@ namespace QuickOpenFile
                 foreach (var file in GetSelectedSolutionFiles())
                 {
                     if (!OpenSolutionResource(file, editor))
+                    {
                         success = false;
+                    }
                 }
 
                 if (success)
@@ -135,24 +125,43 @@ namespace QuickOpenFile
             else
                 resultsRest = null;
 
-            DateTime time1 = DateTime.Now;
+            var sw = Stopwatch.StartNew();
+
             // add results
             if (results != null)
             {
-                foreach (SolutionFile sr in results)
-                    uxFiles.Items.Add(sr.Item);
+                uxFiles.Items.AddRange(results.Select(sr => sr.Item).ToArray());
+                FitColumnsToContent();
             }
+
             // Add 'show more items' line
             if (resultsRest != null)
             {
                 uxFiles.Items.Add(MakeLoadPlaceholder(resultsRest.Count()));
+                FitColumnsToContent();
             }
-            DateTime time2 = DateTime.Now;
-            System.Diagnostics.Debug.Print("QOF: ListBox populated in " + (time2 - time1));
+
+            System.Diagnostics.Debug.Print("QOF: ListBox populated in " + sw.Elapsed);
 
             uxFiles.EndUpdate();
+
             if (uxFiles.Items.Count > 0)
+            {
                 uxFiles.Items[0].Selected = true;
+            }
+        }
+
+        private void FitColumnsToContent()
+        {
+            if (!settings.AutoColumnResize)
+            {
+                return;
+            }
+
+            foreach (ColumnHeader column in uxFiles.Columns)
+            {
+                column.Width = -1;
+            }
         }
 
         public void ShowResultsRest(IEnumerable<SolutionFile> results)
@@ -161,18 +170,22 @@ namespace QuickOpenFile
             uxFiles.BeginUpdate();
             uxFiles.Items.RemoveAt(uxFiles.Items.Count - 1);
 
-            DateTime time1 = DateTime.Now;
+            var sw = Stopwatch.StartNew();
+
             if (results != null)
             {
-                foreach (SolutionFile sr in results)
-                    uxFiles.Items.Add(sr.Item);
+                uxFiles.Items.AddRange(results.Select(sr => sr.Item).ToArray());
+                FitColumnsToContent();
             }
-            DateTime time2 = DateTime.Now;
-            System.Diagnostics.Debug.Print("QOF: ListBox populated in " + (time2 - time1));
+
+            System.Diagnostics.Debug.Print("QOF: ListBox populated with rest in " + sw.Elapsed);
 
             uxFiles.EndUpdate();
+
             if (selectedIndex >= 0 && selectedIndex < uxFiles.Items.Count)
+            {
                 uxFiles.Items[selectedIndex].Selected = true;
+            }
         }
 
         private ListViewItem MakeLoadPlaceholder(int itemsNotVisible)
@@ -202,21 +215,18 @@ namespace QuickOpenFile
         /// <summary>
         /// Searches the solution for the search expression from the textbox.
         /// </summary>
-        /// <param name="index">Reindexes the solution before search.</param>
         /// <param name="delay">Delay before the actual search.</param>
-        private void SearchAfterWhile(bool index = false, int delay = -1)
+        private void SearchAfterWhile(int delay = -1)
         {
             // Waits a fraction of a second for further keystrokes. Then begins
             // the search. This delay is to avoid intensive searching after each
             // keystroke, which used to produce noticable slowdown of the UI.
-            doIndex = doIndex | index;
-
             if (delay < 0)
             {
                 delay = uxSearch.Text.Trim().Length > 2 ? settings.ShortKeystrokeDelay : settings.LongKeystrokeDelay;
             }
 
-            if (delay <= 0 || (doIndex && settings.AsynchronousSearch))
+            if (delay <= 0)
             {
                 SearchNow();
             }
@@ -230,16 +240,18 @@ namespace QuickOpenFile
 
         private void SearchNow()
         {
-            // This performs the actual search.
-            uxTimer.Stop();
-            searchEngine.Search(uxSearch.Text.Trim(), doIndex);
-            doIndex = false;
+            if (uxSearch.Text.Trim().Length > 0 || (!settings.SpaceAsWildcard && uxSearch.Text.Length > 0))
+            {
+                // This performs the actual search.
+                searchEngine.Search(uxSearch.Text.Trim());
+            }
         }
 
         #region UI Code
 
         private void uxTimer_Tick(object sender, EventArgs e)
         {
+            uxTimer.Stop();
             SearchNow();
         }
 
@@ -276,7 +288,8 @@ namespace QuickOpenFile
 
         private void uxFiles_KeyPress(object sender, KeyPressEventArgs e)
         {
-            if (e.KeyChar != ' ')
+            // Redirect everything but space to the search bar
+            if (settings.OpenMultipleFiles && e.KeyChar != ' ')
             {
                 uxSearch.Focus();
                 SendKeys.Send(e.KeyChar.ToString());
@@ -382,21 +395,16 @@ namespace QuickOpenFile
 
         #region IVsUIWin32Element Members
 
-        [DllImport("user32.dll")]
-        static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
-
         public int Create(IntPtr parent, out IntPtr pHandle)
         {
             pHandle = this.Handle;
-            SetParent(this.Handle, parent);
+            NativeMethods.SetParent(this.Handle, parent);
             return 1;
-            //throw new NotImplementedException();
         }
 
         public int Destroy()
         {
             return 1;
-            //throw new NotImplementedException();
         }
 
         public int GetHandle(out IntPtr pHandle)

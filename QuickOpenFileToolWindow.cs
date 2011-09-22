@@ -80,7 +80,7 @@ namespace QuickOpenFile
         {
             if (control != null)
             {
-                control.CleanUp();
+                control.Dispose();
             }
 
             base.Dispose(disposing);

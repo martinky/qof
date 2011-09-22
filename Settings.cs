@@ -39,10 +39,15 @@
         [Description(@"Limit search results that are displayed. Increases performance when searching in large solutions.")]
         public int ResultsLimit { get; set; }
 
-        [Category("Misc")]
+        [Category("Display")]
         [DisplayName("Open multiple files")]
         [Description(@"Allow opening multiple files from a single search. Displays checkboxes next to each result. Hit space to select, and enter to open them all.")]
-        public bool ShowCheckboxes { get; set; }
+        public bool OpenMultipleFiles { get; set; }
+
+        [Category("Display")]
+        [DisplayName("Auto resize columns")]
+        [Description(@"Automatically resize columns to fit the search results.")]
+        public bool AutoColumnResize { get; set; }
 
         [Category("Advanced")]
         [DisplayName("Short keystroke dealy")]
@@ -62,9 +67,10 @@
             IgnoreExternalDependencies = false;
             IgnorePatterns = new string[0];
             ResultsLimit = 50;
-            ShowCheckboxes = false;
+            OpenMultipleFiles = false;
             ShortKeystrokeDelay = 300;
             LongKeystrokeDelay = 450;
+            AutoColumnResize = true;
         }
     }
 }

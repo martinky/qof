@@ -196,11 +196,6 @@ namespace QuickOpenFile
                 catch (Exception) { }
             }
 
-            //Debug.Print("QOF" + recursionLevel + "> " + sr.ItemId + ", " + sr.Name + ", " + sr.Project + ", " + sr.FilePath + ", " + sr.LastWriteTime);
-
-            // ListViewItem is creation moved to the gui thread.
-            //sr.CreateListViewItem();
-
             // Exclude empty names and paths (also non-existent files).
             if (string.IsNullOrEmpty(sr.Name) || string.IsNullOrEmpty(sr.FilePath))
                 return;
@@ -213,7 +208,7 @@ namespace QuickOpenFile
             object objIconIndex;
             hr = hierarchy.GetProperty(itemid, (int)__VSHPROPID.VSHPROPID_IconIndex, out objIconIndex);
             if (objIconIndex != null) sr.IconIndex = (int)objIconIndex;
-            //TODO: look how to obtain item's icons for display in the list view
+            // TODO: look how to obtain item's icons for display in the list view
             //    -> http://connect.microsoft.com/VisualStudio/feedback/details/520256/cannot-find-icon-for-vs2010-database-project
 
             solutionFiles.Add(sr);
