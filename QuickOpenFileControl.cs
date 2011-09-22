@@ -212,32 +212,6 @@ namespace QuickOpenFile
             return (IVsSolution)GetService(typeof(SVsSolution));
         }
 
-        /// <summary>
-        /// Searches the solution for the search expression from the textbox.
-        /// </summary>
-        /// <param name="delay">Delay before the actual search.</param>
-        private void SearchAfterWhile(int delay = -1)
-        {
-            // Waits a fraction of a second for further keystrokes. Then begins
-            // the search. This delay is to avoid intensive searching after each
-            // keystroke, which used to produce noticable slowdown of the UI.
-            if (delay < 0)
-            {
-                delay = uxSearch.Text.Trim().Length > 2 ? settings.ShortKeystrokeDelay : settings.LongKeystrokeDelay;
-            }
-
-            if (delay <= 0)
-            {
-                SearchNow();
-            }
-            else
-            {
-                uxTimer.Stop();
-                uxTimer.Interval = delay;
-                uxTimer.Start();
-            }
-        }
-
         private void SearchNow()
         {
             if (uxSearch.Text.Trim().Length > 0 || (!settings.SpaceAsWildcard && uxSearch.Text.Length > 0))
@@ -258,7 +232,7 @@ namespace QuickOpenFile
         private void uxSearch_TextChanged(object sender, System.EventArgs e)
         {
             System.Diagnostics.Debug.Print("QOF: Key strokes typed...");
-            SearchAfterWhile();
+            SearchNow();
         }
 
         private void uxSearch_KeyDown(object sender, KeyEventArgs e)
