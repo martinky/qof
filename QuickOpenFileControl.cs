@@ -156,14 +156,14 @@ namespace QuickOpenFile
         private void FitColumnsToContent()
         {
             if (!settings.AutoColumnResize)
-            {
                 return;
-            }
 
             foreach (ColumnHeader column in uxFiles.Columns)
-            {
                 column.Width = -1;
-            }
+
+            uxFiles.Columns[0].Width = Math.Max(uxFiles.Columns[0].Width, 150);
+            uxFiles.Columns[1].Width = Math.Max(uxFiles.Columns[1].Width, 70);
+            uxFiles.Columns[2].Width = Math.Max(uxFiles.Columns[2].Width, 150);
         }
 
         public void ShowResultsRest(IEnumerable<SolutionFile> results)
