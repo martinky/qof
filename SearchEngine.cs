@@ -38,7 +38,9 @@ namespace QuickOpenFile
             if (query == null)
                 return;
 
-            task = Task.Factory.StartNew(() => SearchInternal(query));
+            int seq = GetSequence(1);
+            task = Task.Factory.StartNew(() => SearchInternal(query, seq));
+            
         }
 
         public void Index(Action andThen)
@@ -49,6 +51,7 @@ namespace QuickOpenFile
         private void IndexSolution()
         {
             NotifyStatusText("Indexing...");
+            Debug.Print("QOF.SearchEngine: Indexing...");
             var stopwatch = Stopwatch.StartNew();
             solutionFiles = solutionReader.GetSolutionFiles(notifyControl.GetSolution(), settings);
             initialIndexingComplete.Set();
@@ -56,9 +59,15 @@ namespace QuickOpenFile
             NotifyStatusText("Ready");
         }
 
-        private void SearchInternal(string query)
+        private void SearchInternal(string query, int sequence)
         {
             initialIndexingComplete.WaitOne();
+
+            if (GetSequence() != sequence)
+            {
+                Debug.Print("QOF.SearchEngine: Canceling outdated search " + sequence);
+                return;
+            }
 
             IEnumerable<SolutionFile> result = null;
 
@@ -73,7 +82,7 @@ namespace QuickOpenFile
                 var positiveTerms = MakeRegexes(query);
                 var negativeTerms = settings.IgnorePatterns.SelectMany(nq => MakeRegexes(nq));
 
-                Debug.Print("QOF.SearchEngine: Searching for: '" + String.Join(" ", positiveTerms) +
+                Debug.Print("QOF.SearchEngine: Search " + sequence + " for: '" + String.Join(" ", positiveTerms) +
                     "' " + String.Join(" ", negativeTerms.Select(re => "NOT '" + re.ToString() + "'")));
                 result = solutionFiles
                     .Where(sr => positiveTerms.Any(r => r.IsMatch(sr.Name)) && !negativeTerms.Any(r => r.IsMatch(sr.Name)))
@@ -101,7 +110,13 @@ namespace QuickOpenFile
                 NotifyStatusText("Invalid search expression.");
             }
 
-            Debug.Print("QOF.SearchEngine: Found " + (result == null ? 0 : result.Count()) + " matching files in " + stopwatch.Elapsed + ".");
+            if (GetSequence() != sequence)
+            {
+                Debug.Print("QOF.SearchEngine: Canceling outdated search " + sequence);
+                return;
+            }
+
+            Debug.Print("QOF.SearchEngine: Search " + sequence + " Found " + (result == null ? 0 : result.Count()) + " matching files in " + stopwatch.Elapsed + ".");
 
             NotifyResults(result);
         }
@@ -213,6 +228,15 @@ namespace QuickOpenFile
             notifyControl.BeginInvoke((Action)(() => notifyControl.ShowResults(results)));
         }
 
+        private int GetSequence(int increment = 0)
+        {
+            Monitor.Enter(this);
+            sequence = sequence + increment;
+            int seq = sequence;
+            Monitor.Exit(this);
+            return seq;
+        }
+
         class DistinctByFilePath : IEqualityComparer<SolutionFile>
         {
             public bool Equals(SolutionFile x, SolutionFile y)
@@ -236,6 +260,7 @@ namespace QuickOpenFile
         private SolutionReader solutionReader;
         private Task task;
         private ManualResetEvent initialIndexingComplete = new ManualResetEvent(false);
+        private int sequence = 0;
 
         #region IDisposable Members
 

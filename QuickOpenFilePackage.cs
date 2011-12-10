@@ -96,7 +96,7 @@ namespace QuickOpenFile
             var window = this.CreateToolWindow(typeof(QuickOpenFileToolWindow), 0) as QuickOpenFileToolWindow;
             
             window.SetPackage(this);
-            window.InitControl();
+            //window.InitControl();
 
             // Add our command handlers for menu (commands must exist in the .vsct file)
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
