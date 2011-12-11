@@ -53,6 +53,7 @@ namespace QuickOpenFile
             NotifyStatusText("Indexing...");
             Debug.Print("QOF.SearchEngine: Indexing...");
             var stopwatch = Stopwatch.StartNew();
+            initialIndexingComplete.Reset();
             solutionFiles = solutionReader.GetSolutionFiles(notifyControl.GetSolution(), settings);
             initialIndexingComplete.Set();
             Debug.Print("QOF.SearchEngine: Indexed " + solutionFiles.Count + " solution files in " + stopwatch.Elapsed + ".");
@@ -65,7 +66,7 @@ namespace QuickOpenFile
 
             if (GetSequence() != sequence)
             {
-                Debug.Print("QOF.SearchEngine: Canceling outdated search " + sequence);
+                Debug.Print("QOF.SearchEngine: Ignoring outdated search " + sequence);
                 return;
             }
 
@@ -112,11 +113,11 @@ namespace QuickOpenFile
 
             if (GetSequence() != sequence)
             {
-                Debug.Print("QOF.SearchEngine: Canceling outdated search " + sequence);
+                Debug.Print("QOF.SearchEngine: Ignoring outdated search " + sequence);
                 return;
             }
 
-            Debug.Print("QOF.SearchEngine: Search " + sequence + " Found " + (result == null ? 0 : result.Count()) + " matching files in " + stopwatch.Elapsed + ".");
+            Debug.Print("QOF.SearchEngine: Search " + sequence + " found " + (result == null ? 0 : result.Count()) + " matching files in " + stopwatch.Elapsed + ".");
 
             NotifyResults(result);
         }
