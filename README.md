@@ -12,11 +12,11 @@ Usage
 
 After successful installation the extension will add a menu command: <b>Edit > Find and Replace > Quick Open File</b>. The command is also accessible via the predefined shortcut key sequence <b>Ctrl+K, Ctrl+O</b>. You can change the shortcut key preference any time via Tools > Customize... > Keyboard... The command's name is Edit.QuickOpenFile.
 
-![Quick Open File menu shortcut](http://github.com/martinky/qof/raw/master/img/vsopen_menu_2010_fullres.png)
+![Quick Open File menu shortcut](https://raw.github.com/martinky/qof/master/img/vsopen_menu_2010_fullres.png)
 
 After pressing the shortcut key combo the Quick Open File tool window is displayed. Now just type few letters from the file name you wish to open. It will search the entire solution for files that contains the typed string. I.e. the it will not only search for file names that start with the given string but also file names that contain the string in the middle. You can also use wildcards for more complex search patterns: ? matches any character, * matches any substring. The matching behavior can be tweaked in the settings.
 
-![Quick Open File tool window](http://github.com/martinky/qof/raw/master/img/vsopen_menu_2010_fullres.png)
+![Quick Open File tool window](https://raw.github.com/martinky/qof/master/img/vsopen_menu_2010_fullres.png)
 
 The list of matched file names is updated as you type. Use <b>Up</b> and <b>Down</b> arrow keys to move within the list and press <b>Enter</b> to open the selected file. You can select multiple files by ticking the checkboxes (press <b>Space</b>) and open them at once.
 
@@ -24,7 +24,7 @@ Press <b>Shift+Enter</b> to open the selected file using other than the default 
 
 The latest version offers the possibility to tweak the search behavior and various other user settings. To invoke the settings dialog, click on the settings button in the tool window or go to Tools > Options... > Quick Open File. The settings should be self-explanatory.
 
-![Quick Open File tool window](http://github.com/martinky/qof/raw/master/img/vsopen_settings_2010_fullres.png)
+![Quick Open File tool window](https://raw.github.com/martinky/qof/master/img/vsopen_settings_2010_fullres.png)
 
 Installation
 ------------
