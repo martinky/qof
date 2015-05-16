@@ -7,11 +7,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Quick Open File for Visual Studio 2010")]
+[assembly: AssemblyTitle("Quick Open File for Visual Studio 2010, 2012 & 2013")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Quick Open File for Visual Studio 2010")]
+[assembly: AssemblyProduct("Quick Open File for Visual Studio 2010, 2012 & 2013")]
 [assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]   
