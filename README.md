@@ -3,14 +3,14 @@ Quick Open File for Visual Studio
 
 Quick Open File for Visual Studio is a small extension that tries to simulate the feature known to Eclipse users as Open Resource. This extension gives Visual Studio an equivalently quick method for opening any solution file.
 
-Although in Eclipse this feature is invoked by <b>Ctrl+Shift+R</b>, this extension is invoked by pressing the sequence <b>Ctrl+K, Ctrl+O</b> (because the former shortcut key is already taken in Visual Studio by default). The default shortcut key can be changed by the user of course. It indexes all files from the entire solution that are accessible via the Solution Explorer. When it finds the desired file it opens the file in the default editor assigned for that file type.
+Although in Eclipse this feature is invoked by <b>Ctrl+Shift+R</b>, this extension is invoked by pressing the sequence <b>Ctrl+K, Ctrl+0 (zero)</b> because the former shortcut key is already taken in Visual Studio by default. The default shortcut key can be changed by the user of course. It indexes all files from the entire solution that are accessible via the Solution Explorer. When it finds the desired file it opens the file in the default editor assigned for that file type.
 
 It searches for the given substring inside file names. You can also use wildcards (?, *) in the search. The list of matched file names is updated on the fly as you type. Opening the file is as easy as hitting Enter when you've found the desired file. Press Shift+Enter to open the selected file using other than the default editor. This will bring up the Open With dialog where you can choose the desired editor.
 
 Usage
 -----
 
-After successful installation the extension will add a menu command: <b>Edit > Find and Replace > Quick Open File</b>. The command is also accessible via the predefined shortcut key sequence <b>Ctrl+K, Ctrl+O</b>. You can change the shortcut key preference any time via Tools > Customize... > Keyboard... The command's name is Edit.QuickOpenFile.
+After successful installation the extension will add a menu command: <b>Edit > Find and Replace > Quick Open File</b>. The command is also accessible via the predefined shortcut key sequence <b>Ctrl+K, Ctrl+0 (zero)</b>. You can change the shortcut key preference any time via Tools > Customize... > Keyboard... The command's name is Edit.QuickOpenFile.
 
 ![Quick Open File menu shortcut](http://github.com/martinky/qof/raw/master/img/vsopen_menu_2010_fullres.png)
 
@@ -36,7 +36,7 @@ Alternatively you can install not-yet released alpha versions from the [download
 Visual Studio Version Support
 -----------------------------
 
-The current version of the extension only support VS 2010.
+The current version of the extension supports VS 2010, 2013 and 2015.
 
 You can find an old version for VS 2008 in the [download section](https://github.com/martinky/qof/downloads).
 
